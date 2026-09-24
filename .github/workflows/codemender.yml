@@ -1,17 +1,15 @@
 name: CodeMender
 permissions:
     contents: read
-    id-token: write   # Required for the GCP auth inside your composite action
 
 on:
   workflow_call:
-    inputs:
+    secrets:
       workload_identity_provider:
-        required: true
-        type: string
+          required: true
       service_account:
-        required: true
-        type: string
+          required: true
+    inputs:
       verify:
         required: false
         type: boolean
