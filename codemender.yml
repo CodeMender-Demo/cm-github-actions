@@ -1,4 +1,7 @@
 name: CodeMender
+permissions:
+    contents: read
+    id-token: write   # Required for the GCP auth inside your composite action
 
 on:
   workflow_call:
