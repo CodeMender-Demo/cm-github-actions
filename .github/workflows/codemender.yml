@@ -1,6 +1,7 @@
 name: CodeMender
 permissions:
     contents: read
+    id-token: write
 
 on:
   workflow_call:
