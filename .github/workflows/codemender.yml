@@ -26,33 +26,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: "${{ secrets.workload_identity_provider }}"
-          service_account: "${{ secrets.service_account }}"
-    
-      # Set up the gcloud CLI
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-    
-      - name: Check for existing installation and install
-        run: |
-          if ! command -v cm &> /dev/null; then
-              echo "CodeMender not found, installing..."
-              echo "Downloading CodeMender CLI..."
-              curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media"
-              unzip cm-linux-amd64.zip
-              chmod +x cm
-              mv cm /usr/local/bin/cm
-              cm init
-              rm cm-linux-amd64.zip
-          else
-              # Command exists, now it's safe to check the version
-              CM_VERSION=$(cm --version)
-              echo "CodeMender already installed. Version: $CM_VERSION"
-          fi
-
       - name: cm find
         uses: codemender-demo/cm-find@v0.1
         with:
