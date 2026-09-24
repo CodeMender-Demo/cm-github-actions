@@ -1,0 +1,47 @@
+name: CodeMender
+permissions:
+    contents: read
+    id-token: write   # Required for the GCP auth inside your composite action
+
+on:
+  workflow_call:
+    inputs:
+      workload_identity_provider:
+        required: true
+        type: string
+      service_account:
+        required: true
+        type: string
+      verify:
+        required: false
+        type: boolean
+        default: false
+        
+jobs:
+  codemender-find:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: cm find
+        uses: codemender-demo/cm-find@v0.1
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: cm report
+        run: |
+          CM_JSON=${cm report -f json}
+          echo "CM_FINDINGS=$CM_JSON >>$GITHUB_OUTPUT
+    
+  codemender-verify:
+    runs-on: ubuntu-22.04
+    needs: codemender-find
+    steps:
+      - name: Init Job
+        run: |
+          echo "${{ needs.codemender-find.outputs.CM_FINDINGS }}"
