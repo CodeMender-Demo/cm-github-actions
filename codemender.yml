@@ -33,9 +33,10 @@ jobs:
       - name: cm report
         run: |
           CM_JSON=${cm report -f json}
-          echo $CM_JSON >>GITHUB_OUTPUT
+          echo "CM_FINDINGS=$CM_JSON >>$GITHUB_OUTPUT
     
-  # codemender-verify:
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - echo ${{  }}
+  codemender-verify:
+    runs-on: ubuntu-22.04
+    needs: codemender-find
+    steps:
+      - echo ${{ jcodemender-find.outputs.CM_FINDINGS }}
