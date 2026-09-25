@@ -137,7 +137,7 @@ jobs:
                 "status": "OPEN",
                 "start_line": 78,
                 "end_line": 81
-              },
+              }
           ]
           EOF
           # cm report -f json > "$REPORT_NAME"
