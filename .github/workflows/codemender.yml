@@ -103,7 +103,7 @@ jobs:
         id: report
         run: |
           CM_JSON=$(cm report -f json)
-          echo "CM_FINDINGS=$CM_JSON >>$GITHUB_OUTPUT
+          echo "CM_FINDINGS=$CM_JSON" >>$GITHUB_OUTPUT
     
   codemender-verify:
     runs-on: ubuntu-22.04
