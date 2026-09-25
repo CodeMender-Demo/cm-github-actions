@@ -28,5 +28,5 @@ jobs:
             file: DockerFile
             push: true
             tags: |
-                ghcr.io/${{ github.repository_owner }}/codemender-runner:latest
-                ghcr.io/${{ github.repository_owner }}/codemender-runner:${{ github.sha }}
+                ghcr.io/codemender-demo/codemender-runner:latest
+                ghcr.io/codemender-demo/codemender-runner:${{ github.sha }}
