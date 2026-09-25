@@ -20,7 +20,7 @@ RUN curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/downl
     && unzip cm-linux-amd64.zip \
     && chmod +x cm \
     && mv cm /usr/local/bin/cm \
-    && cm --version
+    && cm --version \
     && cm init
 
 ENTRYPOINT ["/bin/bash"]
