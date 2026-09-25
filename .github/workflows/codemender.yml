@@ -21,7 +21,8 @@ jobs:
   codemender-find:
     runs-on: ubuntu-22.04
     outputs:
-      CM_FINDINGS: ${{ steps.report.outputs.CM_FINDINGS }}
+      findings_file_name: ${{ steps.report.outputs.findings_file_name }}
+      matrix_json: ${{ steps.matrix.outputs.matrix_json }}
     steps:
       - name: Checkout Target Repository
         uses: actions/checkout@v4
@@ -102,8 +103,27 @@ jobs:
       - name: cm report
         id: report
         run: |
-          CM_JSON=$(cm report -f json)
-          echo "CM_FINDINGS=$CM_JSON" >>$GITHUB_OUTPUT
+          REPORT_NAME="cm-report-${{ github.sha }}.json"
+          cm report -f json > "$REPORT_NAME"
+          echo "findings_file_name=$REPORT_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-reports-folder
+          path: ${{ steps.report.outputs.filename }}
+          retention-days: 1
+
+      - name: Output finding ids
+        id: matrix
+        run: |
+          echo "$REPORT_NAME"
+          MATRIX_ARRAY=$(jq -c '[.[] | .finding_id]' "$REPORT_NAME")
+          
+          # 3. Write it to GITHUB_OUTPUT
+          echo "matrix_json=$MATRIX_ARRAY" >> "$GITHUB_OUTPUT"
+          
+              
     
   codemender-verify:
     runs-on: ubuntu-22.04
@@ -112,10 +132,16 @@ jobs:
       max-parallel: 10 # Limits concurrent jobs to 10
       matrix:
         # Parses the JSON string output into a GitHub Actions matrix array
-        finding: ${{ fromJson(needs.codemender-find.outputs.CM_FINDINGS) }}
+        finding: ${{ fromJson(needs.codemender-find.outputs.matrix_json) }}
     
     steps:
       - name: Init Job
         run: |
           # You can now access individual finding properties via matrix.finding
           echo "Processing finding: ${{ matrix.finding }}"
+
+      - name: Download report
+        uses: actions/download-artifact@v4
+        with:
+            name: shared-reports-folder
+            path: cm-report-${{ github.sha }}.json
