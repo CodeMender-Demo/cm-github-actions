@@ -117,9 +117,8 @@ jobs:
       - name: Output finding ids
         id: matrix
         run: |
-          MATRIX_ARRAY=$(jq -c '[.[] | .finding_id]' "$(cm report -f json)")
-          
-          # 3. Write it to GITHUB_OUTPUT
+          cm report -f json > findings.json
+          MATRIX_ARRAY=$(jq -c '[.[] | .finding_id]' "$(findings.json)")
           echo "matrix_json=$MATRIX_ARRAY" >> "$GITHUB_OUTPUT"
           
               
