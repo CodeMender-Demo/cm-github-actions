@@ -177,9 +177,9 @@ jobs:
           echo "Processing finding: ${{ matrix.finding }}"
 
       - name: Download report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
-            path: ${{ needs.codemender-find.outputs.findings_file_name }}
+            name: ${{ needs.codemender-find.outputs.findings_file_name }}
 
       - name: Print report
         run: |
