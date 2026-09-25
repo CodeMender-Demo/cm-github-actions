@@ -173,14 +173,47 @@ jobs:
     steps:
       - name: Init Job
         run: |
-          # You can now access individual finding properties via matrix.finding
-          echo "Processing finding: ${{ matrix.finding }}"
+          echo "Verifying finding: ${{ matrix.finding }}"
 
-      - name: Download report
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "${{ secrets.workload_identity_provider }}"
+          service_account: "${{ secrets.service_account }}"
+
+      # Set up the gcloud CLI
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install CodeMender CLI
+        run: |
+          echo "Downloading CodeMender CLI..."
+          curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media"
+          unzip cm-linux-amd64.zip
+          chmod +x cm
+          mv cm /usr/local/bin/cm
+          cm init
+          rm cm-linux-amd64.zip
+
+      - name: Download Report
         uses: actions/download-artifact@v8
         with:
             name: ${{ needs.codemender-find.outputs.findings_file_name }}
 
-      - name: Print report
+      - name: Import Report
         run: |
-          cat ${{ needs.codemender-find.outputs.findings_file_name }}
+          cm report import -f ${{ needs.codemender-find.outputs.findings_file_name }}
+
+      - name: Verify Finding
+        run: |
+          cm verify ${{ matrix.finding }} --bypass-warning -y
+
+      - name: Update Summary
+        run: |
+          cm report ${{ matrix.finding }} -f md >> $GITHUB_STEP_SUMMARY
