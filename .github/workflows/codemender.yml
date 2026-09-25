@@ -2,7 +2,6 @@ name: CodeMender
 permissions:
     contents: read
     id-token: write
-    packages: read
 
 on:
   workflow_call:
@@ -11,18 +10,10 @@ on:
           required: true
       service_account:
           required: true
-    inputs:
-      verify:
-        required: false
-        type: boolean
-        default: false
         
 jobs:
   codemender-find:
     runs-on: ubuntu-22.04
-    outputs:
-      findings_file_name: ${{ steps.report.outputs.findings_file_name }}
-      matrix_json: ${{ steps.matrix.outputs.matrix_json }}
     steps:
       - name: Checkout Target Repository
         uses: actions/checkout@v4
@@ -96,55 +87,11 @@ jobs:
           else:
               print("No new extensions found.")
 
-      - name: cm find
+      - name: Find
         run: |
             cm find .
 
-      - name: cm report
+      - name: Report
         id: report
         run: |
-          REPORT_NAME="cm-report-${{ github.sha }}.json"
-          cm report -f json > "$REPORT_NAME"
-          echo "findings_file_name=$REPORT_NAME" >> $GITHUB_OUTPUT
-
-      - name: Upload Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: shared-reports-folder
-          path: ${{ steps.report.outputs.findings_file_name }}
-          retention-days: 1
-
-      - name: Output finding ids
-        id: matrix
-        run: |
-          MATRIX_ARRAY=$(jq -c '[.[] | .finding_id]' "${{ steps.report.outputs.findings_file_name }}")
-          
-          # 3. Write it to GITHUB_OUTPUT
-          echo "matrix_json=$MATRIX_ARRAY" >> "$GITHUB_OUTPUT"
-          
-              
-    
-  codemender-verify:
-    runs-on: ubuntu-22.04
-    needs: codemender-find
-    strategy:
-      max-parallel: 10 # Limits concurrent jobs to 10
-      matrix:
-        # Parses the JSON string output into a GitHub Actions matrix array
-        finding: ${{ fromJson(needs.codemender-find.outputs.matrix_json) }}
-    
-    steps:
-      - name: Init Job
-        run: |
-          # You can now access individual finding properties via matrix.finding
-          echo "Processing finding: ${{ matrix.finding }}"
-
-      - name: Download report
-        uses: actions/download-artifact@v4
-        with:
-            name: shared-reports-folder
-            path: cm-report-${{ github.sha }}.json
-
-      - name: Print report
-        run: |
-          cat cm-report-${{ github.sha }}.json
+          cm report -f md >> $GITHUB_STEP_SUMMARY
