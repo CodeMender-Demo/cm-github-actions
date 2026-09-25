@@ -212,6 +212,7 @@ jobs:
 
       - name: Verify Finding
         run: |
+          cm report
           cm verify ${{ matrix.finding }} --bypass-warning -y
 
       - name: Update Summary
