@@ -2,6 +2,7 @@ name: CodeMender
 permissions:
     contents: read
     id-token: write
+    packages: read
 
 on:
   workflow_call:
