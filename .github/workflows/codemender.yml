@@ -129,6 +129,7 @@ jobs:
     needs: codemender-find
     strategy:
       max-parallel: 10 # Limits concurrent jobs to 10
+      fail-fast: false
       matrix:
         # Parses the JSON string output into a GitHub Actions matrix array
         finding: ${{ fromJson(needs.codemender-find.outputs.matrix_json) }}
