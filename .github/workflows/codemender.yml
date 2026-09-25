@@ -104,7 +104,7 @@ jobs:
         id: prep_state
         run: |
           CM_STATE_FILENAME="cm_state-${{ github.sha }}.tar.gz"
-          tar -czf $CM_STATE_FILENAME -C ~/.codemender/state.db
+          tar -czf $CM_STATE_FILENAME -C ~/.codemender state.db
           echo "cm_state_filename=$CM_STATE_FILENAME" >> $GITHUB_OUTPUT
 
       - name: Upload State
