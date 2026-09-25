@@ -62,9 +62,9 @@ jobs:
       #         echo "CodeMender already installed. Version: $CM_VERSION"
           # fi
 
-      - name: Print pwd
+      - name: codemender init
         run: |
-          pwd
+          cm init
       
       - name: Update config.yaml with file types
         shell: python
