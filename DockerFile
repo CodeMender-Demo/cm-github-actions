@@ -17,8 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install the CodeMender CLI (example binary installation)
 RUN curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media" \
-RUN unzip cm-linux-amd64.zip \
-RUN chmod +x /usr/local/bin/cm
+    && unzip cm-linux-amd64.zip \
+    && chmod +x cm \
+    && mv cm /usr/local/bin/cm
 
 # Verify CLI installation
 RUN cm --version
