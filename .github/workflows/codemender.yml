@@ -20,19 +20,12 @@ on:
 jobs:
   codemender-find:
     runs-on: ubuntu-22.04
-    container: 
-      image: ghcr.io/codemender-demo/codemender-runner:latest
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout Target Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-
-      
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -44,27 +37,15 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # - name: Check for existing installation and install
-      #   shell: bash
-      #   run: |
-      #     if ! command -v cm &> /dev/null; then
-      #         echo "CodeMender not found, installing..."
-      #         echo "Downloading CodeMender CLI..."
-      #         curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media"
-      #         unzip cm-linux-amd64.zip
-      #         chmod +x cm
-      #         mv cm /usr/local/bin/cm
-      #         cm init
-      #         rm cm-linux-amd64.zip
-      #     else
-      #         # Command exists, now it's safe to check the version
-      #         CM_VERSION=$(cm --version)
-      #         echo "CodeMender already installed. Version: $CM_VERSION"
-          # fi
-
-      - name: codemender init
+      - name: Install CodeMender CLI
         run: |
+          echo "Downloading CodeMender CLI..."
+          curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media"
+          unzip cm-linux-amd64.zip
+          chmod +x cm
+          mv cm /usr/local/bin/cm
           cm init
+          rm cm-linux-amd64.zip
       
       - name: Update config.yaml with file types
         shell: python
