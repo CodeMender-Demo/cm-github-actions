@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     jq \
     unzip \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install PyYAML
 
 # Install the CodeMender CLI (example binary installation)
 RUN curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media" \
