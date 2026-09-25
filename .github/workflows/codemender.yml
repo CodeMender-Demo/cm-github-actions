@@ -96,11 +96,11 @@ jobs:
           else:
               print("No new extensions found.")
 
-      - name: cm find
+      - name: Find
         run: |
             cm find .
 
-      - name: cm report
+      - name: Report
         id: report
         run: |
           REPORT_NAME="cm-report-${{ github.sha }}.json"
@@ -110,7 +110,6 @@ jobs:
       - name: Upload Report
         uses: actions/upload-artifact@v4
         with:
-          name: shared-reports-folder
           path: ${{ steps.report.outputs.findings_file_name }}
           retention-days: 1
 
@@ -142,9 +141,8 @@ jobs:
       - name: Download report
         uses: actions/download-artifact@v4
         with:
-            name: shared-reports-folder
-            path: cm-report-${{ github.sha }}.json
+            path: ${{ needs.codemender-find.outputs.findings_file_name }}
 
       - name: Print report
         run: |
-          cat cm-report-${{ github.sha }}.json
+          cat ${{ needs.codemender-find.outputs.findings_file_name }}
