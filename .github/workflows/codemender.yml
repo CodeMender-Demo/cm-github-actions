@@ -144,3 +144,7 @@ jobs:
         with:
             name: shared-reports-folder
             path: cm-report-${{ github.sha }}.json
+
+      - name: Print report
+        run: |
+          cat cm-report-${{ github.sha }}.json
