@@ -30,88 +30,125 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: "${{ secrets.workload_identity_provider }}"
-          service_account: "${{ secrets.service_account }}"
+      # - name: Authenticate to Google Cloud
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     workload_identity_provider: "${{ secrets.workload_identity_provider }}"
+      #     service_account: "${{ secrets.service_account }}"
 
-      # Set up the gcloud CLI
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      # # Set up the gcloud CLI
+      # - name: Set up Google Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v2
 
-      - name: Install CodeMender CLI
-        run: |
-          echo "Downloading CodeMender CLI..."
-          curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media"
-          unzip cm-linux-amd64.zip
-          chmod +x cm
-          mv cm /usr/local/bin/cm
-          cm init
-          rm cm-linux-amd64.zip
+      # - name: Install CodeMender CLI
+      #   run: |
+      #     echo "Downloading CodeMender CLI..."
+      #     curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media"
+      #     unzip cm-linux-amd64.zip
+      #     chmod +x cm
+      #     mv cm /usr/local/bin/cm
+      #     cm init
+      #     rm cm-linux-amd64.zip
       
-      - name: Update config.yaml with file types
-        shell: python
-        run: |
-          import os
-          import yaml
+      # - name: Update config.yaml with file types
+      #   shell: python
+      #   run: |
+      #     import os
+      #     import yaml
     
-          config_file = os.path.expanduser('~/.codemender/config.yaml')
+      #     config_file = os.path.expanduser('~/.codemender/config.yaml')
             
-          # 1. Discover all unique file extensions, excluding .git
-          extensions = set()
-          for root, _, files in os.walk('.'):
-              if '.git' in root:
-                  continue
-              for file in files:
-                  _, ext = os.path.splitext(file)
-                  if ext:
-                      extensions.add(ext)
+      #     # 1. Discover all unique file extensions, excluding .git
+      #     extensions = set()
+      #     for root, _, files in os.walk('.'):
+      #         if '.git' in root:
+      #             continue
+      #         for file in files:
+      #             _, ext = os.path.splitext(file)
+      #             if ext:
+      #                 extensions.add(ext)
     
-          # 2. Load existing config
-          if os.path.exists(config_file):
-              with open(config_file, 'r') as f:
-                  config = yaml.safe_load(f) or {}
-          else:
-              print("Config not found")
-              config = {}
+      #     # 2. Load existing config
+      #     if os.path.exists(config_file):
+      #         with open(config_file, 'r') as f:
+      #             config = yaml.safe_load(f) or {}
+      #     else:
+      #         print("Config not found")
+      #         config = {}
     
-          # Ensure the list key exists (assuming the key is 'file_types')
-          list_key = 'include'
-          if list_key not in config['scan']['extensions'] or config['scan']['extensions'][list_key] is None:
-              config['scan']['extensions'][list_key] = []
+      #     # Ensure the list key exists (assuming the key is 'file_types')
+      #     list_key = 'include'
+      #     if list_key not in config['scan']['extensions'] or config['scan']['extensions'][list_key] is None:
+      #         config['scan']['extensions'][list_key] = []
     
-          # 3. Add new extensions
-          updated = False
-          for ext in extensions:
-            if ext not in config['scan']['extensions'][list_key]:
-                  config['scan']['extensions'][list_key].append(ext)
-                  updated = True
+      #     # 3. Add new extensions
+      #     updated = False
+      #     for ext in extensions:
+      #       if ext not in config['scan']['extensions'][list_key]:
+      #             config['scan']['extensions'][list_key].append(ext)
+      #             updated = True
     
-          # 4. Write back if changes were made
-          if updated:
-              with open(config_file, 'w') as f:
-                  yaml.dump(config, f, default_flow_style=False)
-              print(f"Updated {config_file} with new extensions.")
-          else:
-              print("No new extensions found.")
+      #     # 4. Write back if changes were made
+      #     if updated:
+      #         with open(config_file, 'w') as f:
+      #             yaml.dump(config, f, default_flow_style=False)
+      #         print(f"Updated {config_file} with new extensions.")
+      #     else:
+      #         print("No new extensions found.")
 
-      - name: Find
-        run: |
-            cm find .
+      # - name: Find
+      #   run: |
+      #       cm find .
 
       - name: Report
         id: report
         run: |
           REPORT_NAME="cm-report-${{ github.sha }}.json"
-          cm report -f json > "$REPORT_NAME"
+
+          # For testing output mock json
+          cat << 'EOF' > "$REPORT_NAME"
+          [
+            {
+                "finding_id": "47ba625d-e8bc-5a24-b329-20b65a584a5e",
+                "session_id": "ChAzZjJhMTRjZTM0ZDVmNGU0EAgaATAqBG1haW4",
+                "title": "SQL Injection in Invoice Search Query",
+                "file_path": "/home/runner/work/cm-python-sample/cm-python-sample/app/routers/invoices.py",
+                "severity": "CRITICAL",
+                "confidence": 100,
+                "analysis": "Data Flow Analysis:\n- Source: The `customer_name`, `status`, and `sort_by` HTTP GET query parameters entered via `/api/v1/invoices/search` (app/routers/invoices.py, lines 16-24).\n- Sanitization/Validation: None. No input validation, character filtering, or column allowlisting is performed.\n- Sink: Concatenated into `base_query` using Python f-strings and executed via `cursor.execute(base_query)` (app/routers/invoices.py, line 48).\n\nAn attacker can supply SQL injection payloads in `customer_name`, `status`, or `sort_by` to manipulate the query logic, extract sensitive ledger records, or execute arbitrary SQLite functions.\n\nConceptual Exploit Payload:\nGET /api/v1/invoices/search?customer_name=%27%20OR%201=1--\nAlternatively, using UNION-based exfiltration:\nGET /api/v1/invoices/search?customer_name=%27%20UNION%20SELECT%20id,%20invoice_number,%20billing_email,%20%27pwned%27,%20amount,%20currency,%20status,%20notes,%20created_at%20FROM%20invoices--",
+                "snippet": "    base_query = (\n        f\"SELECT id, invoice_number, customer_name, billing_email, amount, currency, status, notes, created_at \"\n        f\"FROM invoices WHERE customer_name LIKE '%{customer_name}%'\"\n    )\n\n    if status:\n        base_query += f\" AND status = '{status}'\"\n\n    base_query += f\" ORDER BY {sort_by} DESC\"\n\n    try:\n        cursor.execute(base_query)",
+                "vuln_type": "Injection - SQL Injection",
+                "vuln_id": "CWE-89",
+                "status": "OPEN",
+                "start_line": 37,
+                "end_line": 48
+              },
+              {
+                "finding_id": "b8962ada-5acb-5e89-82cd-455162d773ee",
+                "session_id": "ChAzZjJhMTRjZTM0ZDVmNGU0EAgaATAqBG1haW4",
+                "title": "SQL Injection in Invoice Lookup by Identifier",
+                "file_path": "/home/runner/work/cm-python-sample/cm-python-sample/app/routers/invoices.py",
+                "severity": "CRITICAL",
+                "confidence": 100,
+                "analysis": "Data Flow Analysis:\n- Source: The `invoice_number` path parameter supplied to `GET /api/v1/invoices/lookup/{invoice_number}` (app/routers/invoices.py, line 68).\n- Sanitization/Validation: None. The raw string parameter is directly embedded into the SQL statement.\n- Sink: Interpolated directly into `query = f\"SELECT * FROM invoices WHERE invoice_number = '{invoice_number}'\"` and executed via `cursor.execute(query)` (app/routers/invoices.py, line 81).\n\nAn attacker can provide a malicious `invoice_number` payload containing SQL syntax to bypass invoice lookups or exfiltrate unauthorized records.\n\nConceptual Exploit Payload:\nGET /api/v1/invoices/lookup/'%20OR%20'1'='1",
+                "snippet": "    query = f\"SELECT * FROM invoices WHERE invoice_number = '{invoice_number}'\"\n\n    try:\n        cursor.execute(query)",
+                "vuln_type": "Injection - SQL Injection",
+                "vuln_id": "CWE-89",
+                "status": "OPEN",
+                "start_line": 78,
+                "end_line": 81
+              },
+          ]
+          EOF
+          # cm report -f json > "$REPORT_NAME"
           echo "findings_file_name=$REPORT_NAME" >> $GITHUB_OUTPUT
 
       - name: Upload Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: ${{ steps.report.outputs.findings_file_name }}
           retention-days: 1
+          archive: false
 
       - name: Output finding ids
         id: matrix
@@ -124,6 +161,7 @@ jobs:
               
     
   codemender-verify:
+    if: ${{ inputs.verify == true }}
     runs-on: ubuntu-22.04
     needs: codemender-find
     strategy:
