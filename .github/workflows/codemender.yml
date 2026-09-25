@@ -111,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: shared-reports-folder
-          path: ${{ steps.report.outputs.filename }}
+          path: ${{ steps.report.outputs.findings_file_name }}
           retention-days: 1
 
       - name: Output finding ids
