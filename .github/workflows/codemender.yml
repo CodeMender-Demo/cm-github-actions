@@ -59,7 +59,7 @@ jobs:
       #         # Command exists, now it's safe to check the version
       #         CM_VERSION=$(cm --version)
       #         echo "CodeMender already installed. Version: $CM_VERSION"
-          fi
+          # fi
 
       - name: Update config.yaml with file types
         shell: python
