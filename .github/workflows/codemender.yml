@@ -21,7 +21,7 @@ jobs:
   codemender-find:
     runs-on: ubuntu-22.04
     outputs:
-      cm_state_filename: ${{ steps.report.outputs.cm_state_filename }}
+      cm_state_filename: ${{ steps.prep_state.outputs.cm_state_filename }}
       matrix_json: ${{ steps.matrix.outputs.matrix_json }}
     steps:
       - name: Checkout Target Repository
