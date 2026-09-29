@@ -99,17 +99,38 @@ jobs:
 
       - name: Get Wiz Repo Graph resource ID
         run: |
+          RESPONSE=$(curl -s "https://api.us100.app.wiz.io/graphql" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{ 
+            "query": "query VersionControlResources($first: Int $after: String $filterBy: VersionControlResourceFilters) { versionControlResources(first: $first after: $after filterBy: $filterBy) { nodes { id platform providerID type repository { id name url } } } }", 
+            "variables": { 
+              "first": 5, 
+              "filterBy": { 
+                "search": "Codemender-Demo/cm-python-sample", 
+                "type": "REPOSITORY_BRANCH" 
+              } 
+            } 
+          }')
+
+          # Extract the values into shell variables (grabs the first node in the array)
+          echo $RESPONSE | jq .
+          RESOURCE_TYPE=$(echo "$RESPONSE" | jq -r '.data.versionControlResources.nodes[0].type')
+          REPO_ID=$(echo "$RESPONSE" | jq -r '.data.versionControlResources.nodes[0].repository.id')
+            
+          # Verify the variables have values
+          if [ "$RESOURCE_TYPE" = "null" ] || [ "$REPO_ID" = "null" ]; then
+              echo "Error: Failed to extract repository details from the API response."
+              RESOURCE_TYPE=""
+              REPO_ID=""
+          fi
 
       - name: Output finding to Wiz
         shell: python
-        env:
-          REPO_ID: "REPO_ID"
-          REPO_TYPE: "REPO_TYPE"
         run: |
             import json
     
             from datetime import datetime, timezone
-            
             
             now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
             with open("codemender_finding.json", "r") as f:
