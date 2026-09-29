@@ -135,6 +135,9 @@ jobs:
               REPO_ID=""
           fi
 
+          echo "WIZ_RESOURCE_TYPE=$RESOURCE_TYPE" >> "$GITHUB_ENV"
+          echo "WIZ_REPO_ID=$REPO_D" >> "$GITHUB_ENV"
+
       - name: Output finding to Wiz
         shell: python
         run: |
@@ -155,8 +158,8 @@ jobs:
                         "description": input_finding.get("vuln_type", ""),
                         "resource": {
                             "graphEntity": {
-                              "id": "$REPO_ID",
-                              "type": "$REPO_TYPE"
+                              "id": "$WIZ_RESOURCE_TYPE",
+                              "type": "$WIZ_REPO_ID"
                             }
                         },
                         "assetName": "${{ github.repository }}",
