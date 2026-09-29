@@ -202,7 +202,7 @@ jobs:
 
       - name: Verify Finding
         run: |
-          finding_id=$(cm report -f json | jq .[].finding_id)
+          finding_id=$(cm report -f json | jq -r '.[0].finding_id')
           cm verify $finding_id --bypass-warning -y
 
       - name: Update Summary
