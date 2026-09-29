@@ -163,3 +163,7 @@ jobs:
       - name: Update Summary
         run: |
           cm report $finding -f md >> $GITHUB_STEP_SUMMARY
+      # TODO
+      # Always update summary
+      # Output json report
+      # Add job to Import finding to Wiz with input variable check
