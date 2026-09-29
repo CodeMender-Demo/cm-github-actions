@@ -197,7 +197,7 @@ jobs:
 
       - name: Import State
         run: |
-          cm report import ${{ matrix.finding }}
+          cm report import ${{ toJson(matrix.finding) }}
 
       - name: Verify Finding
         run: |
