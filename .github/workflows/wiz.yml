@@ -121,7 +121,7 @@ jobs:
                               "type": "$REPO_TYPE"
                             }
                         },
-                        "assetName": ${{ github.repository }},
+                        "assetName": "${{ github.repository }}",
                         "stepsToReproduce": input_finding.get("analysis", ""),
                         "weaknesses": [input_finding.get("vuln_id", "")],
                         "reporterId": "CodeMender",
