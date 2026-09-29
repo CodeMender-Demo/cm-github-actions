@@ -103,11 +103,8 @@ jobs:
       - name: Output findings
         id: output_findings
         run: |
-          # cm report -f json > findings.json
-          # MATRIX_ARRAY=$(jq -c '[.[] | .finding_id]' "findings.json")
-          # echo "matrix_json=$MATRIX_ARRAY" >> "$GITHUB_OUTPUT"
-          # cat fake_findings.json
-          echo "findings_json=$(jq -c . fake_findings.json)" >> "$GITHUB_OUTPUT"
+          cm report -f json > findings.json
+          echo "findings_json=$(jq -c . findings.json)" >> "$GITHUB_OUTPUT"
           
               
     
