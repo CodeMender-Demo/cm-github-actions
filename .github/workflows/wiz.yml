@@ -113,8 +113,8 @@ jobs:
                         "description": input_finding.get("vuln_type", ""),
                         "resource": {
                             "graphEntity": {
-                              "id": $REPO_ID,
-                              "type": $REPO_TYPE
+                              "id": "$REPO_ID",
+                              "type": "$REPO_TYPE"
                             }
                         },
                         "assetName": ${{ github.repository }},
