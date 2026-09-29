@@ -250,13 +250,15 @@ jobs:
                         },
                         "assetName": "${{ github.repository }}",
                         "stepsToReproduce": input_finding.get("analysis", ""),
-                        "weaknesses": [input_finding.get("vuln_id", "")],
+                        "weaknesses": [],
                         "reporterId": "CodeMender",
                         "reportedAt": now,
                         "origin": "MANUAL"
                     }
                 }
             }
+            if "vuln_id" in input_finding:
+                wiz_output["variables"]["input"]["weaknesses"].append(input_finding.get("vuln_id"))
 
             with open("wiz_finding.json", "w") as f:
                 f.write(json.dumps(wiz_output, indent=2))
