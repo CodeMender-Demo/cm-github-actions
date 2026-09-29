@@ -81,8 +81,9 @@ jobs:
 
       - name: Write finding to file
         run: |
-          CM_FINDING='${{ toJson(matrix.finding) }}'
-          echo "$CM_FINDING" >codemender_finding.json
+          cat << 'EOF' > codemender_finding.json
+          ${{ toJson(matrix.finding) }}
+          EOF
           # Verify file is written
           # cat codemender_finding.json
 
