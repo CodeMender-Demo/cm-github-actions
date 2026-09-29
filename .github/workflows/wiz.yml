@@ -136,7 +136,7 @@ jobs:
           fi
 
           echo "WIZ_RESOURCE_TYPE=$RESOURCE_TYPE" >> "$GITHUB_ENV"
-          echo "WIZ_REPO_ID=$REPO_D" >> "$GITHUB_ENV"
+          echo "WIZ_REPO_ID=$REPO_ID" >> "$GITHUB_ENV"
 
       - name: Output finding to Wiz
         shell: python
@@ -159,8 +159,8 @@ jobs:
                         "description": input_finding.get("vuln_type", ""),
                         "resource": {
                             "graphEntity": {
-                              "id": os.environ.get("WIZ_RESOURCE_TYPE", ""),
-                              "type": os.environ.get("WIZ_REPO_ID", "")
+                              "id": os.environ.get("WIZ_REPO_ID", ""),
+                              "type": os.environ.get("WIZ_RESOURCE_TYPE", "")
                             }
                         },
                         "assetName": "${{ github.repository }}",
@@ -180,3 +180,10 @@ jobs:
       - name: Test output
         run: |
           cat wiz_finding.json
+
+      - name: Import Finding
+        run: |
+          curl "https://api.us100.app.wiz.io/graphql" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d @wiz_finding.json | jq .
