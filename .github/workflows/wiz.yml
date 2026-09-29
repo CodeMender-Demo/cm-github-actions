@@ -89,7 +89,7 @@ jobs:
 
       - name: Get Wiz Access Token
         run: |
-          ACCESS_TOKEN=$(curl --request POST \
+          ACCESS_TOKEN=$(curl -s -f --request POST \
           --url 'https://auth.app.wiz.io/oauth/token' \
           --header 'content-type: application/x-www-form-urlencoded' \
           --data grant_type=client_credentials \
