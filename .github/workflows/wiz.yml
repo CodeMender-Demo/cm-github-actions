@@ -142,6 +142,7 @@ jobs:
         shell: python
         run: |
             import json
+            import os
     
             from datetime import datetime, timezone
             
@@ -158,8 +159,8 @@ jobs:
                         "description": input_finding.get("vuln_type", ""),
                         "resource": {
                             "graphEntity": {
-                              "id": "$WIZ_RESOURCE_TYPE",
-                              "type": "$WIZ_REPO_ID"
+                              "id": os.environ.get("WIZ_RESOURCE_TYPE", ""),
+                              "type": os.environ.get("WIZ_REPO_ID", "")
                             }
                         },
                         "assetName": "${{ github.repository }}",
