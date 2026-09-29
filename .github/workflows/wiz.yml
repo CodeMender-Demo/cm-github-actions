@@ -11,6 +11,10 @@ on:
           required: true
       service_account:
           required: true
+      wiz_client_id:
+          required: true
+      wiz_client_secret:
+          required: true
     inputs:
       verify:
         required: false
