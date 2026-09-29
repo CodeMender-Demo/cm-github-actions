@@ -1,0 +1,136 @@
+name: CodeMender
+permissions:
+    contents: read
+    id-token: write
+    packages: read
+
+on:
+  workflow_call:
+    secrets:
+      workload_identity_provider:
+          required: true
+      service_account:
+          required: true
+    inputs:
+      verify:
+        required: false
+        type: boolean
+        default: false
+        
+jobs:
+  codemender-find:
+    runs-on: ubuntu-22.04
+    outputs:
+      # cm_state_filename: ${{ steps.prep_state.outputs.cm_state_filename }}
+      findings_json: ${{ steps.output_findings.outputs.findings_json }}
+    steps:
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Output findings
+        id: output_findings
+        run: |
+          cat <<EOF > findings.json
+          [
+            {
+              "finding_id": "f6c50116-5769-4c80-99a0-58e91089587f",
+              "session_id": "ChBkYTQ1OWM1ZjQ0ZWM2YTI5EAgaATAqBG1haW4",
+              "title": "Reflected Cross-Site Scripting (XSS) in Report Preview",
+              "file_path": "/home/admin_adamhlevy_altostrat_com/cm-python-sample/app/routers/reports.py",
+              "severity": "HIGH",
+              "confidence": 100,
+              "analysis": "The endpoint /api/v1/reports/preview in /home/admin_adamhlevy_altostrat_com/cm-python-sample/app/routers/reports.py accepts user-controlled query parameters `report_title`, `client_name`, and `custom_notes` and embeds them directly into an HTML document using an f-string without contextual HTML entity encoding or template sanitization. The rendered HTML string is returned with Content-Type: text/html and HTTP status 200 via HTMLResponse(content=html_document, status_code=200). When an attacker provides arbitrary HTML/JavaScript payloads, such as `\u003cscript\u003ealert(document.cookie)\u003c/script\u003e`, the code is reflected unescaped in the response and executes in the context of the user's browser session.",
+              "snippet": "    html_document = f\"\"\"\u003c!DOCTYPE html\u003e\n\u003chtml lang=\"en\"\u003e\n\u003chead\u003e\n    \u003cmeta charset=\"UTF-8\"\u003e\n    \u003ctitle\u003eReport Preview - {report_title}\u003c/title\u003e\n    \u003cstyle\u003e\n        body {{ font-family: 'Helvetica Neue', Arial, sans-serif; margin: 3rem; background: #fcfcfc; color: #222; }}\n        .report-container {{ max-width: 800px; margin: auto; background: #fff; padding: 2.5rem; border: 1px solid #ddd; border-radius: 6px; }}\n        .header {{ border-bottom: 2px solid #0f172a; padding-bottom: 1rem; margin-bottom: 1.5rem; }}\n        .meta {{ font-size: 1.05rem; margin-bottom: 1rem; color: #334155; }}\n        .notes-box {{ background: #f8fafc; border: 1px solid #cbd5e1; padding: 1rem; border-radius: 4px; margin-top: 1.5rem; }}\n    \u003c/style\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n    \u003cdiv class=\"report-container\"\u003e\n        \u003cdiv class=\"header\"\u003e\n            \u003ch1\u003e{report_title}\u003c/h1\u003e\n            \u003cp\u003eFinPulse Automated Statement Generator\u003c/p\u003e\n        \u003c/div\u003e\n        \u003cdiv class=\"meta\"\u003e\n            Prepared for client organization: \u003cstrong\u003e{client_name}\u003c/strong\u003e\n        \u003c/div\u003e\n        \u003cdiv class=\"notes-box\"\u003e\n            \u003ch4\u003eAnalyst Notes \u0026 Terms\u003c/h4\u003e\n            \u003cdiv\u003e{custom_notes}\u003c/div\u003e\n        \u003c/div\u003e\n    \u003c/div\u003e\n\u003c/body\u003e\n\u003c/html\u003e\"\"\"\n\n    return HTMLResponse(content=html_document, status_code=200)",
+              "vuln_type": "IMPROPER NEUTRALIZATION OF INPUT DURING WEB PAGE GENERATION ('CROSS-SITE SCRIPTING')",
+              "vuln_id": "CWE-79",
+              "fingerprint": "84a3b82eab98df21",
+              "status": "VERIFIED",
+              "start_line": 37,
+              "end_line": 67
+            }
+          ]
+          EOF
+          echo "findings_json=$(jq -c . findings.json)" >> "$GITHUB_OUTPUT"
+          
+              
+    
+  codemender-verify-with-wiz-output:
+    if: ${{ inputs.verify == true }}
+    runs-on: ubuntu-22.04
+    needs: codemender-find
+    strategy:
+      max-parallel: 3 # Limits concurrent jobs to 3
+      fail-fast: false
+      matrix:
+        # Parses the JSON string output into a GitHub Actions matrix array
+        finding: ${{ fromJson(needs.codemender-find.outputs.findings_json) }}
+    
+    steps:
+      - name: Init Job
+        run: |
+          echo "Verifying finding: ${{ matrix.finding.finding_id }}"
+
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Write finding to file
+        run: |
+          echo ${{ matrix.finding }} > codemender_finding.json
+
+      - name: Get Wiz Access Token
+        run: |
+
+      - name: Get Wiz Repo Graph resource ID
+        run: |
+
+      - name: Output finding to Wiz
+        shell: python
+        env:
+          REPO_ID: "REPO_ID"
+          REPO_TYPE: "REPO_TYPE"
+        run: |
+            import json
+    
+            from datetime import datetime, timezone
+            
+            
+            now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+            with open("codemender_finding.json", "r") as f:
+              input_finding = json.loads(f.read())
+            
+            wiz_output = {
+                "query": "mutation CreatePenetrationTestFinding($input: CreatePenetrationTestFindingInput!) { createPenetrationTestFinding(input: $input) { penetrationTestFinding { id } } }",
+                "variables": {
+                    "input": {
+                        "name": input_finding.get("title", "unknown"),
+                        "severity": input_finding.get("severity", "MEDIUM"),
+                        "description": input_finding.get("vuln_type", ""),
+                        "resource": {
+                            "graphEntity": {
+                              "id": $REPO_ID,
+                              "type": $REPO_TYPE
+                            }
+                        },
+                        "assetName": ${{ github.repository }},
+                        "stepsToReproduce": input_finding.get("analysis", ""),
+                        "weaknesses": [input_finding.get("vuln_id", "")],
+                        "reporterId": "CodeMender",
+                        "reporterAt": now,
+                        "origin": "MANUAL"
+                    }
+                }
+            }
+
+            with open("wiz_finding.json", "w") as f:
+                f.write(json.dumps(wiz_output, indent=2))
+
+
+      - name: Test output
+        run: |
+          cat wiz_finding.json
