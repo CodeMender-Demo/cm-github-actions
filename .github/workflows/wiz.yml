@@ -82,6 +82,8 @@ jobs:
       - name: Write finding to file
         run: |
           echo ${{ matrix.finding }} > codemender_finding.json
+          # Verify file is written
+          cat codemender_finding.json
 
       - name: Get Wiz Access Token
         run: |
