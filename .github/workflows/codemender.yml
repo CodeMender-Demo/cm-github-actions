@@ -151,8 +151,10 @@ jobs:
           rm cm-linux-amd64.zip
 
       - name: Import State
+        env:
+          FINDING_JSON: ${{ toJson(matrix.finding) }}
         run: |
-          echo '${{ toJson(matrix.finding) }}' >finding.json
+          echo "$FINDING_JSON" >finding.json
           cm report import -f finding.json
 
       - name: Verify Finding
