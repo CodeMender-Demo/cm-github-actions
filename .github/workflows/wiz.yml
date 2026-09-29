@@ -167,7 +167,7 @@ jobs:
                         "stepsToReproduce": input_finding.get("analysis", ""),
                         "weaknesses": [input_finding.get("vuln_id", "")],
                         "reporterId": "CodeMender",
-                        "reporterAt": now,
+                        "reportedAt": now,
                         "origin": "MANUAL"
                     }
                 }
@@ -183,7 +183,7 @@ jobs:
 
       - name: Import Finding
         run: |
-          curl "https://api.us100.app.wiz.io/graphql" \
+          curl -f "https://api.us100.app.wiz.io/graphql" \
           -H "Authorization: Bearer $ACCESS_TOKEN" \
           -H "Content-Type: application/json" \
           -d @wiz_finding.json | jq .
