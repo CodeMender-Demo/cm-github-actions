@@ -126,17 +126,17 @@ jobs:
           # Extract the values into shell variables (grabs the first node in the array)
           echo $RESPONSE | jq .
           RESOURCE_TYPE=$(echo "$RESPONSE" | jq -r '.data.versionControlResources.nodes[0].type')
-          REPO_ID=$(echo "$RESPONSE" | jq -r '.data.versionControlResources.nodes[0].repository.id')
+          RESOURCE_ID=$(echo "$RESPONSE" | jq -r '.data.versionControlResources.nodes[0].id')
             
           # Verify the variables have values
           if [ "$RESOURCE_TYPE" = "null" ] || [ "$REPO_ID" = "null" ]; then
               echo "Error: Failed to extract repository details from the API response."
               RESOURCE_TYPE=""
-              REPO_ID=""
+              RESOURCE_ID=""
           fi
 
           echo "WIZ_RESOURCE_TYPE=$RESOURCE_TYPE" >> "$GITHUB_ENV"
-          echo "WIZ_REPO_ID=$REPO_ID" >> "$GITHUB_ENV"
+          echo "WIZ_RESOURCE_ID=$RESOURCE_ID" >> "$GITHUB_ENV"
 
       - name: Output finding to Wiz
         shell: python
@@ -159,7 +159,7 @@ jobs:
                         "description": input_finding.get("vuln_type", ""),
                         "resource": {
                             "graphEntity": {
-                              "id": os.environ.get("WIZ_REPO_ID", ""),
+                              "id": os.environ.get("WIZ_RESOURCE_ID", ""),
                               "type": os.environ.get("WIZ_RESOURCE_TYPE", "")
                             }
                         },
