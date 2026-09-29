@@ -233,6 +233,7 @@ jobs:
             now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
             with open("codemender_finding.json", "r") as f:
               input_finding = json.loads(f.read())
+              input_finding = input_finding[0]
             
             wiz_output = {
                 "query": "mutation CreatePenetrationTestFinding($input: CreatePenetrationTestFindingInput!) { createPenetrationTestFinding(input: $input) { penetrationTestFinding { id } } }",
