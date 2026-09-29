@@ -21,8 +21,8 @@ jobs:
   codemender-find:
     runs-on: ubuntu-22.04
     outputs:
-      cm_state_filename: ${{ steps.prep_state.outputs.cm_state_filename }}
-      matrix_json: ${{ steps.matrix.outputs.matrix_json }}
+      # cm_state_filename: ${{ steps.prep_state.outputs.cm_state_filename }}
+      findings_json: ${{ steps.output_findings.outputs.findings_json }}
     steps:
       - name: Checkout Target Repository
         uses: actions/checkout@v4
@@ -36,90 +36,114 @@ jobs:
           workload_identity_provider: "${{ secrets.workload_identity_provider }}"
           service_account: "${{ secrets.service_account }}"
 
-      # Set up the gcloud CLI
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      # # Set up the gcloud CLI
+      # - name: Set up Google Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v2
 
-      - name: Install CodeMender CLI
-        run: |
-          echo "Downloading CodeMender CLI..."
-          curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media"
-          unzip cm-linux-amd64.zip
-          chmod +x cm
-          mv cm /usr/local/bin/cm
-          cm init
-          rm cm-linux-amd64.zip
+      # - name: Install CodeMender CLI
+      #   run: |
+      #     echo "Downloading CodeMender CLI..."
+      #     curl -L -o cm-linux-amd64.zip "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media"
+      #     unzip cm-linux-amd64.zip
+      #     chmod +x cm
+      #     mv cm /usr/local/bin/cm
+      #     cm init
+      #     rm cm-linux-amd64.zip
       
-      - name: Update config.yaml with file types
-        shell: python
-        run: |
-          import os
-          import yaml
+      # - name: Update config.yaml with file types
+      #   shell: python
+      #   run: |
+      #     import os
+      #     import yaml
     
-          config_file = os.path.expanduser('~/.codemender/config.yaml')
+      #     config_file = os.path.expanduser('~/.codemender/config.yaml')
             
-          # 1. Discover all unique file extensions, excluding .git
-          extensions = set()
-          for root, _, files in os.walk('.'):
-              if '.git' in root:
-                  continue
-              for file in files:
-                  _, ext = os.path.splitext(file)
-                  if ext:
-                      extensions.add(ext)
+      #     # 1. Discover all unique file extensions, excluding .git
+      #     extensions = set()
+      #     for root, _, files in os.walk('.'):
+      #         if '.git' in root:
+      #             continue
+      #         for file in files:
+      #             _, ext = os.path.splitext(file)
+      #             if ext:
+      #                 extensions.add(ext)
     
-          # 2. Load existing config
-          if os.path.exists(config_file):
-              with open(config_file, 'r') as f:
-                  config = yaml.safe_load(f) or {}
-          else:
-              print("Config not found")
-              config = {}
+      #     # 2. Load existing config
+      #     if os.path.exists(config_file):
+      #         with open(config_file, 'r') as f:
+      #             config = yaml.safe_load(f) or {}
+      #     else:
+      #         print("Config not found")
+      #         config = {}
     
-          # Ensure the list key exists (assuming the key is 'file_types')
-          list_key = 'include'
-          if list_key not in config['scan']['extensions'] or config['scan']['extensions'][list_key] is None:
-              config['scan']['extensions'][list_key] = []
+      #     # Ensure the list key exists (assuming the key is 'file_types')
+      #     list_key = 'include'
+      #     if list_key not in config['scan']['extensions'] or config['scan']['extensions'][list_key] is None:
+      #         config['scan']['extensions'][list_key] = []
     
-          # 3. Add new extensions
-          updated = False
-          for ext in extensions:
-            if ext not in config['scan']['extensions'][list_key]:
-                  config['scan']['extensions'][list_key].append(ext)
-                  updated = True
+      #     # 3. Add new extensions
+      #     updated = False
+      #     for ext in extensions:
+      #       if ext not in config['scan']['extensions'][list_key]:
+      #             config['scan']['extensions'][list_key].append(ext)
+      #             updated = True
     
-          # 4. Write back if changes were made
-          if updated:
-              with open(config_file, 'w') as f:
-                  yaml.dump(config, f, default_flow_style=False)
-              print(f"Updated {config_file} with new extensions.")
-          else:
-              print("No new extensions found.")
+      #     # 4. Write back if changes were made
+      #     if updated:
+      #         with open(config_file, 'w') as f:
+      #             yaml.dump(config, f, default_flow_style=False)
+      #         print(f"Updated {config_file} with new extensions.")
+      #     else:
+      #         print("No new extensions found.")
 
-      - name: Find
+      # - name: Find
+      #   run: |
+      #       cm find .
+
+      # - name: Prepare State
+      #   id: prep_state
+      #   run: |
+      #     CM_STATE_FILENAME="cm_state-${{ github.sha }}.tar.gz"
+      #     tar -czf $CM_STATE_FILENAME -C ~/.codemender state.db
+      #     echo "cm_state_filename=$CM_STATE_FILENAME" >> $GITHUB_OUTPUT
+
+      # - name: Upload State
+      #   uses: actions/upload-artifact@v7
+      #   with:
+      #     path: ${{ steps.prep_state.outputs.cm_state_filename }}
+      #     retention-days: 1
+      #     archive: false
+
+      - name: Fake Find
         run: |
-            cm find .
-
-      - name: Prepare State
-        id: prep_state
-        run: |
-          CM_STATE_FILENAME="cm_state-${{ github.sha }}.tar.gz"
-          tar -czf $CM_STATE_FILENAME -C ~/.codemender state.db
-          echo "cm_state_filename=$CM_STATE_FILENAME" >> $GITHUB_OUTPUT
-
-      - name: Upload State
-        uses: actions/upload-artifact@v7
-        with:
-          path: ${{ steps.prep_state.outputs.cm_state_filename }}
-          retention-days: 1
-          archive: false
+            cat <<EOF > fake_findings.json
+            [
+              {
+                "finding_id": "54bf0de6-4d4a-44b8-8db9-d5521cbcca2e",
+                "session_id": "ChA2OGVkZTgzYTAxZmQwN2ZiEAgaATAqBG1haW4",
+                "title": "Clickjacking UI Overlay Attack via Permissive Same-Origin Framing (Level 7)",
+                "file_path": "/home/admin_adamhlevy_altostrat_com/VulnerableApp/src/main/java/org/sasanlabs/service/vulnerability/clickjacking/ClickjackingVulnerability.java",
+                "severity": "LOW",
+                "confidence": 100,
+                "analysis": "**Source**: Untrusted user or attacker who can host content on the same origin requesting `/VulnerableApp/ClickjackingVulnerability/LEVEL_7`.\n**Sanitization/Validation**: The application adds `X-Frame-Options: SAMEORIGIN`. This restriction only prevents cross-origin embedding, allowing an attacker with a foothold on the same origin to frame the endpoint.\n**Sink**: The HTTP response allows same-origin framing via `ResponseEntity.ok().headers(headers).body(...)`.\n**Conceptual Exploit Payload**:\n```html\n\u003c!-- Hosted on the same origin --\u003e\n\u003cdiv style=\"position:relative;\"\u003e\n  \u003cbutton style=\"position:absolute;top:50px;left:50px;\"\u003eClaim Prize\u003c/button\u003e\n  \u003ciframe src=\"/VulnerableApp/ClickjackingVulnerability/LEVEL_7\" style=\"opacity:0.001;position:absolute;top:0;left:0;width:300px;height:300px;z-index:2;\"\u003e\u003c/iframe\u003e\n\u003c/div\u003e\n```\nA same-origin attack page overlays the transparent iframe of Level 7 over a decoy element to hijack user clicks.",
+                "snippet": "    public ResponseEntity\u003cGenericVulnerabilityResponseBean\u003cString\u003e\u003e overlayAttackSameOrigin() {\n        HttpHeaders headers = new HttpHeaders();\n        headers.add(\"X-Frame-Options\", \"SAMEORIGIN\");\n        return ResponseEntity.ok()\n                .headers(headers)\n                .body(new GenericVulnerabilityResponseBean\u003c\u003e(VULNERABLE_RESPONSE, true));\n    }",
+                "vuln_type": "IMPROPER RESTRICTION OF RENDERED UI LAYERS OR FRAMES",
+                "vuln_id": "CWE-1021",
+                "fingerprint": "2b8b3d2cd29b9ceb",
+                "status": "OPEN",
+                "start_line": 210,
+                "end_line": 216
+              }
+            ]
+            EOF
 
       - name: Output finding ids
-        id: matrix
+        id: output_findings
         run: |
-          cm report -f json > findings.json
-          MATRIX_ARRAY=$(jq -c '[.[] | .finding_id]' "findings.json")
-          echo "matrix_json=$MATRIX_ARRAY" >> "$GITHUB_OUTPUT"
+          # cm report -f json > findings.json
+          # MATRIX_ARRAY=$(jq -c '[.[] | .finding_id]' "findings.json")
+          # echo "matrix_json=$MATRIX_ARRAY" >> "$GITHUB_OUTPUT"
+          echo "findings_json=$(cat fake_findings.json)" >> "$GITHUB_OUTPUT"
           
               
     
@@ -132,7 +156,7 @@ jobs:
       fail-fast: false
       matrix:
         # Parses the JSON string output into a GitHub Actions matrix array
-        finding: ${{ fromJson(needs.codemender-find.outputs.matrix_json) }}
+        finding: ${{ fromJson(needs.codemender-find.outputs.findings_json) }}
     
     steps:
       - name: Init Job
@@ -165,20 +189,20 @@ jobs:
           cm init
           rm cm-linux-amd64.zip
 
-      - name: Download State
-        uses: actions/download-artifact@v8
-        with:
-            name: ${{ needs.codemender-find.outputs.cm_state_filename }}
+      # - name: Download State
+      #   uses: actions/download-artifact@v8
+      #   with:
+      #       name: ${{ needs.codemender-find.outputs.cm_state_filename }}
 
       - name: Import State
         run: |
-          tar -xzf ${{ needs.codemender-find.outputs.cm_state_filename }} -C ~/.codemender
+          cm report import ${{ matrix.finding }}
 
       - name: Verify Finding
         run: |
-          cm report
-          cm verify ${{ matrix.finding }} --bypass-warning -y
+          finding_id=$(cm report -f json) | jq.[].finding_id 
+          cm verify $finding_id --bypass-warning -y
 
       - name: Update Summary
         run: |
-          cm report ${{ matrix.finding }} -f md >> $GITHUB_STEP_SUMMARY
+          cm report $finding -f md >> $GITHUB_STEP_SUMMARY
