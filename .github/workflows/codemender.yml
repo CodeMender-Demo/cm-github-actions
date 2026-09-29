@@ -11,6 +11,10 @@ on:
           required: true
       service_account:
           required: true
+      wiz_client_id:
+          required: true
+      wiz_client_secret:
+          required: true
     inputs:
       verify:
         required: false
@@ -108,7 +112,7 @@ jobs:
           
               
     
-  codemender-verify:
+  codemender-verify-with-wiz-output:
     if: ${{ inputs.verify == true }}
     runs-on: ubuntu-22.04
     needs: codemender-find
@@ -122,7 +126,7 @@ jobs:
     steps:
       - name: Init Job
         run: |
-          echo "Verifying finding: ${{ matrix.finding }}"
+          echo "Verifying finding: ${{ matrix.finding.finding_id }}"
 
       - name: Checkout Target Repository
         uses: actions/checkout@v4
@@ -165,7 +169,104 @@ jobs:
       - name: Update Summary
         run: |
           cm report $finding -f md >> $GITHUB_STEP_SUMMARY
-      # TODO
-      # Always update summary
-      # Output json report
-      # Add job to Import finding to Wiz with input variable check
+
+      - name: Write verified finding to file
+        run: |
+          cm report -f json >codemender_finding.json
+          # Verify file is written
+          cat codemender_finding.json
+
+      - name: Get Wiz Access Token
+        run: |
+          TOKEN=$(curl -s -f --request POST \
+          --url 'https://auth.app.wiz.io/oauth/token' \
+          --header 'content-type: application/x-www-form-urlencoded' \
+          --data grant_type=client_credentials \
+          --data client_id=${{ secrets.wiz_client_id }} \
+          --data client_secret=${{ secrets.wiz_client_secret }} \
+          --data audience=wiz-api | jq -r '.access_token')
+
+          # Mask the token in logs
+          echo "::add-mask::$TOKEN"
+          
+          # Write it to the environment file for subsequent steps
+          echo "ACCESS_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Get Wiz Repo Graph resource ID
+        run: |
+          RESPONSE=$(curl -s "https://api.us100.app.wiz.io/graphql" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{ 
+            "query": "query VersionControlResources($first: Int $after: String $filterBy: VersionControlResourceFilters) { versionControlResources(first: $first after: $after filterBy: $filterBy) { nodes { id platform providerID type repository { id name url } } } }", 
+            "variables": { 
+              "first": 5, 
+              "filterBy": { 
+                "search": "${{ github.repository }}", 
+                "type": "REPOSITORY_BRANCH" 
+              } 
+            } 
+          }')
+          # Extract the values into shell variables (grabs the first node in the array)
+          echo $RESPONSE | jq .
+          RESOURCE_TYPE=$(echo "$RESPONSE" | jq -r '.data.versionControlResources.nodes[0].type')
+          RESOURCE_ID=$(echo "$RESPONSE" | jq -r '.data.versionControlResources.nodes[0].id')
+            
+          # Verify the variables have values
+          if [ "$RESOURCE_TYPE" = "null" ] || [ "$REPO_ID" = "null" ]; then
+              echo "Error: Failed to extract repository details from the API response."
+              RESOURCE_TYPE=""
+              RESOURCE_ID=""
+          fi
+
+          echo "WIZ_RESOURCE_TYPE=$RESOURCE_TYPE" >> "$GITHUB_ENV"
+          echo "WIZ_RESOURCE_ID=$RESOURCE_ID" >> "$GITHUB_ENV"
+
+      - name: Format finding for Wiz
+        shell: python
+        run: |
+            import json
+            import os
+    
+            from datetime import datetime, timezone
+            
+            now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+            with open("codemender_finding.json", "r") as f:
+              input_finding = json.loads(f.read())
+            
+            wiz_output = {
+                "query": "mutation CreatePenetrationTestFinding($input: CreatePenetrationTestFindingInput!) { createPenetrationTestFinding(input: $input) { penetrationTestFinding { id } } }",
+                "variables": {
+                    "input": {
+                        "name": input_finding.get("title", "unknown"),
+                        "severity": input_finding.get("severity", "MEDIUM"),
+                        "description": input_finding.get("vuln_type", ""),
+                        "resource": {
+                            "graphEntity": {
+                              "id": os.environ.get("WIZ_RESOURCE_ID", ""),
+                              "type": os.environ.get("WIZ_RESOURCE_TYPE", "")
+                            }
+                        },
+                        "assetName": "${{ github.repository }}",
+                        "stepsToReproduce": input_finding.get("analysis", ""),
+                        "weaknesses": [input_finding.get("vuln_id", "")],
+                        "reporterId": "CodeMender",
+                        "reportedAt": now,
+                        "origin": "MANUAL"
+                    }
+                }
+            }
+
+            with open("wiz_finding.json", "w") as f:
+                f.write(json.dumps(wiz_output, indent=2))
+
+      - name: Test output
+        run: |
+          cat wiz_finding.json
+
+      - name: Import Finding
+        run: |
+          curl -f "https://api.us100.app.wiz.io/graphql" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d @wiz_finding.json | jq .
