@@ -28,8 +28,6 @@ jobs:
 
       - name: Print Git DIff
         run: |
-          git status
           echo "$(git status)"
-          git diff
           echo "$(git diff)"
           
