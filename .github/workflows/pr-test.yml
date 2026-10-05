@@ -1,0 +1,31 @@
+
+name: PR Test
+on:
+  # Trigger manually via the GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+  codemender-scan:
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+      security-events: write
+
+    steps:
+      # Checkout the TARGET repository instead of the central .github repo
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+
+      - name: Write a file
+        run: |
+          cat << EOF > experi.py
+          ### This is an experimental file
+          EOF
+
+      - name: Print Git DIff
+        run: | 
+          git diff
+          
