@@ -23,11 +23,15 @@ jobs:
         run: |
           cat << EOF > experi.py
           ### This is an experimental file
+          print("Hello!!")
           EOF
-          git add experi.py
 
       - name: Print Git DIff
         run: |
+          echo "### STAGING FILE ###"
+          echo "$(git add experi.py)"
+          echo "### PRINT GIT STATUS ###"
           echo "$(git status)"
+          echo "### PRINT GIT DIFF ###"
           echo "$(git diff)"
           
