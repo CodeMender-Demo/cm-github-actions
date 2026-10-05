@@ -24,6 +24,7 @@ jobs:
           cat << EOF > experi.py
           ### This is an experimental file
           EOF
+          git add experi.py
 
       - name: Print Git DIff
         run: |
