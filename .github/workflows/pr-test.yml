@@ -33,5 +33,5 @@ jobs:
           echo "### PRINT GIT STATUS ###"
           echo "$(git status)"
           echo "### PRINT GIT DIFF ###"
-          echo "$(git diff)"
+          echo "$(git diff --staged)"
           
