@@ -26,6 +26,9 @@ jobs:
           EOF
 
       - name: Print Git DIff
-        run: | 
+        run: |
+          git status
+          echo "$(git status)"
           git diff
+          echo "$(git diff)"
           
