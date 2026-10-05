@@ -44,11 +44,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
           # 2. Create a new branch and commit your staged files
-          git checkout -b auto-update-experi2
+          git checkout -b auto-update-experiment
           git commit -m "Add experi.py"
           
           # 3. Push the new branch to the repository
-          git push -u origin auto-update-experi2
+          git push -u origin auto-update-experiment
           
           # 4. Use the official GitHub CLI to create the Draft PR
           gh pr create \
